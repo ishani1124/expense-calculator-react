@@ -16,12 +16,18 @@ const initialItems = [
   {
     item: "Phone",
     id: 3,
-    price: 2000,
+    price: 1000,
     denomination: "$",
   },
 ];
 function App() {
   const [itemArray, setItemArray] = useState(initialItems);
+  const totalExpenseDollar = itemArray
+    .filter((i) => i.denomination === "$")
+    .reduce((a, item) => a + item.price, 0);
+  const totalExpenseEuro = itemArray
+    .filter((i) => i.denomination === "€")
+    .reduce((a, item) => a + item.price, 0);
 
   function handleDeleteItem(id) {
     setItemArray(itemArray.filter((item) => item.id !== id));
@@ -34,7 +40,10 @@ function App() {
       <Header />
       <ItemForm addItem={addItem} />
       <ItemList itemArray={itemArray} handleDeleteItem={handleDeleteItem} />
-      <Footer />
+      <Footer
+        totalExpenseDollar={totalExpenseDollar}
+        totalExpenseEuro={totalExpenseEuro}
+      />
     </div>
   );
 }
@@ -43,7 +52,7 @@ function Header() {
   return <div className="head"> Expense Calculator</div>;
 }
 
-function ItemForm({ addItem }) {
+function ItemForm({ addItem, findTotal }) {
   const [itemEntered, setItemEntered] = useState("");
   const [denomination, setDenomination] = useState("$");
   const [price, setPrice] = useState("");
@@ -58,6 +67,7 @@ function ItemForm({ addItem }) {
     if (!itemEntered || !price) return alert("Fill the Form");
     // console.log(newItem);
     addItem(newItem);
+
     setItemEntered("");
     setPrice("");
     setDenomination("$");
@@ -94,7 +104,7 @@ function ItemForm({ addItem }) {
 
 function ItemList({ itemArray, handleDeleteItem }) {
   return (
-    <div>
+    <div className="item-list">
       {" "}
       {itemArray.map((item) => (
         <Item item={item} handleDeleteItem={handleDeleteItem} />
@@ -110,12 +120,16 @@ function Item({ item, handleDeleteItem }) {
       <p>{item.denomination}</p>
       <p>{item.price}</p>
       <button>Edit</button>
-      <button onClick={() => handleDeleteItem(item.id)}>Delete</button>
+      <button onClick={() => handleDeleteItem(item.id)}>Delete</button>{" "}
     </div>
   );
 }
-function Footer() {
-  return <div>Your total expense is X</div>;
+function Footer({ totalExpenseEuro, totalExpenseDollar }) {
+  return (
+    <div className="footer">
+      Your total expense is ${totalExpenseDollar} and €{totalExpenseEuro}
+    </div>
+  );
 }
 
 export default App;
