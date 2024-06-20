@@ -5,28 +5,28 @@ const initialItems = [
     item: "Blanket",
     id: 1,
     price: 10,
-    denomination: "$",
+    symbol: "$",
   },
   {
     item: "Pen",
     id: 2,
     price: 1,
-    denomination: "€",
+    symbol: "€",
   },
   {
     item: "Phone",
     id: 3,
     price: 1000,
-    denomination: "$",
+    symbol: "$",
   },
 ];
 function App() {
   const [itemArray, setItemArray] = useState(initialItems);
   const totalExpenseDollar = itemArray
-    .filter((i) => i.denomination === "$")
+    .filter((i) => i.symbol === "$")
     .reduce((a, item) => a + item.price, 0);
   const totalExpenseEuro = itemArray
-    .filter((i) => i.denomination === "€")
+    .filter((i) => i.symbol === "€")
     .reduce((a, item) => a + item.price, 0);
 
   function handleDeleteItem(id) {
@@ -43,6 +43,7 @@ function App() {
       <Footer
         totalExpenseDollar={totalExpenseDollar}
         totalExpenseEuro={totalExpenseEuro}
+        itemArray={itemArray}
       />
     </div>
   );
@@ -54,13 +55,13 @@ function Header() {
 
 function ItemForm({ addItem, findTotal }) {
   const [itemEntered, setItemEntered] = useState("");
-  const [denomination, setDenomination] = useState("$");
+  const [symbol, setSymbol] = useState("$");
   const [price, setPrice] = useState("");
   function handleSubmit(e) {
     e.preventDefault();
     const newItem = {
       id: Date.now(),
-      denomination,
+      symbol,
       item: itemEntered,
       price,
     };
@@ -70,7 +71,7 @@ function ItemForm({ addItem, findTotal }) {
 
     setItemEntered("");
     setPrice("");
-    setDenomination("$");
+    setSymbol("$");
   }
   return (
     <div>
@@ -89,10 +90,7 @@ function ItemForm({ addItem, findTotal }) {
           onChange={(e) => setPrice(Number(e.target.value))}
           placeholder="Enter Price"
         ></input>
-        <select
-          value={denomination}
-          onChange={(e) => setDenomination(e.target.value)}
-        >
+        <select value={symbol} onChange={(e) => setSymbol(e.target.value)}>
           <option value="$">$</option>
           <option value="€">€</option>
         </select>
@@ -107,27 +105,34 @@ function ItemList({ itemArray, handleDeleteItem }) {
     <div className="item-list">
       {" "}
       {itemArray.map((item) => (
-        <Item item={item} handleDeleteItem={handleDeleteItem} />
+        <Item item={item} key={item.id} handleDeleteItem={handleDeleteItem} />
       ))}
     </div>
   );
 }
 
 function Item({ item, handleDeleteItem }) {
+  //const [isEditItem, setisEditItem] = useState(false);
   return (
     <div className="item">
       <p>{item.item}</p>
-      <p>{item.denomination}</p>
+      <p>{item.symbol}</p>
       <p>{item.price}</p>
       <button>Edit</button>
       <button onClick={() => handleDeleteItem(item.id)}>Delete</button>{" "}
     </div>
   );
 }
-function Footer({ totalExpenseEuro, totalExpenseDollar }) {
+function Footer({ totalExpenseEuro, totalExpenseDollar, itemArray }) {
   return (
     <div className="footer">
-      Your total expense is ${totalExpenseDollar} and €{totalExpenseEuro}
+      {itemArray.length > 0 ? (
+        <p>
+          Your total expense is ${totalExpenseDollar} and €{totalExpenseEuro}{" "}
+        </p>
+      ) : (
+        ""
+      )}
     </div>
   );
 }
