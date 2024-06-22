@@ -22,6 +22,24 @@ const initialItems = [
 ];
 function App() {
   const [itemArray, setItemArray] = useState(initialItems);
+
+  const [isEditItem, setisEditItem] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  function handleEdit(item) {
+    setisEditItem((isEditItem) => !isEditItem);
+    setEditItem(item);
+  }
+  function handleChange(val, id, field) {
+    const newItemArray = itemArray.map((i) =>
+      i.id === id ? { ...i, [field]: field === "price" ? Number(val) : val } : i
+    );
+
+    setItemArray(newItemArray);
+    setEditItem((prevItem) => ({
+      ...prevItem,
+      [field]: field === "price" ? Number(val) : val,
+    }));
+  }
   const totalExpenseDollar = itemArray
     .filter((i) => i.symbol === "$")
     .reduce((a, item) => a + item.price, 0);
@@ -33,13 +51,25 @@ function App() {
     setItemArray(itemArray.filter((item) => item.id !== id));
   }
   function addItem(newItem) {
-    return setItemArray(() => [...itemArray, newItem]);
+    setItemArray([...itemArray, newItem]);
   }
   return (
     <div className="App">
       <Header />
-      <ItemForm addItem={addItem} />
-      <ItemList itemArray={itemArray} handleDeleteItem={handleDeleteItem} />
+      <ItemForm
+        addItem={addItem}
+        editItem={editItem}
+        isEditItem={isEditItem}
+        handleChange={handleChange}
+        setIsEditItem={setisEditItem}
+      />
+      <ItemList
+        handleEdit={handleEdit}
+        itemArray={itemArray}
+        handleDeleteItem={handleDeleteItem}
+        isEditItem={isEditItem}
+        editItem={editItem}
+      />
       <Footer
         totalExpenseDollar={totalExpenseDollar}
         totalExpenseEuro={totalExpenseEuro}
@@ -53,7 +83,13 @@ function Header() {
   return <div className="head"> Expense Calculator</div>;
 }
 
-function ItemForm({ addItem, findTotal }) {
+function ItemForm({
+  addItem,
+  isEditItem,
+  editItem,
+  handleChange,
+  setIsEditItem,
+}) {
   const [itemEntered, setItemEntered] = useState("");
   const [symbol, setSymbol] = useState("$");
   const [price, setPrice] = useState("");
@@ -66,62 +102,117 @@ function ItemForm({ addItem, findTotal }) {
       price,
     };
     if (!itemEntered || !price) return alert("Fill the Form");
-    // console.log(newItem);
     addItem(newItem);
 
     setItemEntered("");
     setPrice("");
     setSymbol("$");
   }
+  function handleEditForm(e) {
+    e.preventDefault();
+    //After editing setting the isEditItem value to false so that Submit form will be open
+    //and edit form will be closed
+    setIsEditItem(false);
+  }
   return (
     <div>
-      <form onSubmit={handleSubmit}>
-        <label>Enter Item</label>
-        <input
-          type="text"
-          value={itemEntered}
-          onChange={(e) => setItemEntered(e.target.value)}
-          placeholder="Enter Item"
-        ></input>
-        <label>Enter Price</label>
-        <input
-          type="text"
-          value={price}
-          onChange={(e) => setPrice(Number(e.target.value))}
-          placeholder="Enter Price"
-        ></input>
-        <select value={symbol} onChange={(e) => setSymbol(e.target.value)}>
-          <option value="$">$</option>
-          <option value="€">€</option>
-        </select>
-        <button>Submit</button>
-      </form>
+      {!isEditItem && (
+        <form onSubmit={handleSubmit}>
+          <label>Enter Item</label>
+          <input
+            type="text"
+            value={itemEntered}
+            onChange={(e) => setItemEntered(e.target.value)}
+            placeholder="Enter Item"
+          ></input>
+          <label>Enter Price</label>
+          <input
+            type="text"
+            value={price}
+            onChange={(e) => setPrice(Number(e.target.value))}
+            placeholder="Enter Price"
+          ></input>
+          <select value={symbol} onChange={(e) => setSymbol(e.target.value)}>
+            <option value="$">$</option>
+            <option value="€">€</option>
+          </select>
+          <button>Submit</button>
+        </form>
+      )}
+
+      {isEditItem && editItem && (
+        <form className="edit-form" onSubmit={handleEditForm}>
+          <label>Edit Item</label>
+          <input
+            type="text"
+            value={editItem.item}
+            onChange={(e) => handleChange(e.target.value, editItem.id, "item")}
+            placeholder="Edit Item"
+          ></input>
+          <label>Edit Price</label>
+          <input
+            type="text"
+            value={editItem.price || ""}
+            onChange={(e) =>
+              handleChange(Number(e.target.value), editItem.id, "price")
+            }
+            placeholder="Edit Price"
+          ></input>
+          <select
+            value={editItem.symbol}
+            onChange={(e) =>
+              handleChange(e.target.value, editItem.id, "symbol")
+            }
+          >
+            <option value="$">$</option>
+            <option value="€">€</option>
+          </select>
+          <button>Done</button>
+        </form>
+      )}
     </div>
   );
 }
 
-function ItemList({ itemArray, handleDeleteItem }) {
+function ItemList({
+  handleEdit,
+  itemArray,
+  handleDeleteItem,
+  isEditItem,
+  editItem,
+}) {
   return (
     <div className="item-list">
-      {" "}
       {itemArray.map((item) => (
-        <Item item={item} key={item.id} handleDeleteItem={handleDeleteItem} />
+        <Item
+          item={item}
+          key={item.id}
+          isEditItem={isEditItem}
+          handleEdit={handleEdit}
+          editItem={editItem}
+          handleDeleteItem={handleDeleteItem}
+        />
       ))}
     </div>
   );
 }
 
-function Item({ item, handleDeleteItem }) {
-  //const [isEditItem, setisEditItem] = useState(false);
+function Item({ handleEdit, item, handleDeleteItem, isEditItem, editItem }) {
   return (
     <div className="item">
       <p>{item.item}</p>
       <p>{item.symbol}</p>
       <p>{item.price}</p>
-      <button>Edit</button>
-      <button onClick={() => handleDeleteItem(item.id)}>Delete</button>{" "}
+      <Button onClick={() => handleEdit(item)}>
+        {editItem?.id === item.id && isEditItem ? "Close" : " Edit"}
+      </Button>
+      <button onClick={() => handleDeleteItem(item.id)}>Delete</button>
     </div>
   );
+}
+
+function Button({ children, onClick }) {
+  return <button onClick={onClick}>{children}</button>;
 }
 function Footer({ totalExpenseEuro, totalExpenseDollar, itemArray }) {
   return (
